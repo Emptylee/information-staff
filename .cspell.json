@@ -1,0 +1,28 @@
+{
+  "version": "0.2",
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "package-lock.json"
+  ],
+  "dictionaryDefinitions": [],
+  "dictionaries": [],
+  "words": [
+    "Tavily",
+    "DeepSeek",
+    "shadcn",
+    "zustand",
+    "clsx",
+    "Lucide",
+    "weibo",
+    "weixin",
+    "xiaolai",
+    "Vercel",
+    "openai",
+    "Trae",
+    "wechat",
+    "Serper",
+    "tailwindcss",
+    "tavily"
+  ]
+}
