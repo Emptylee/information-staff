@@ -2,8 +2,19 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import fetch from 'node-fetch';
 import { allowCors, getProxyAgent } from './utils.js';
 
+import NodeCache from 'node-cache';
+
+const cache = new NodeCache({ stdTTL: 172800 }); // Cache TTL set to 48 hours
+
 const handler = async (req: VercelRequest, res: VercelResponse) => {
   const { name } = req.body;
+
+  // Check cache for existing data
+  const cachedData = cache.get(name);
+  if (cachedData) {
+    console.log('Cache hit for', name);
+    return res.status(200).json(cachedData);
+  }
   const TAVILY_API_KEY = process.env.VITE_TAVILY_API_KEY;
 
   if (!TAVILY_API_KEY) {
@@ -31,14 +42,18 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
     });
 
     const data = await response.json();
+
+    // Set cache with the new data
+    cache.set(name, data);
     if (!response.ok) {
         console.error('Tavily API Error:', data);
         return res.status(500).json({ error: `Tavily API failed: ${JSON.stringify(data)}` });
     }
 
     // Filter results to ensure they are within the last 48 hours
+    const dateRangeDays = 2; // Configurable time range in days
     const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - dateRangeDays);
 
     if (data.results && Array.isArray(data.results)) {
       console.log('Raw results count:', data.results.length);
@@ -70,7 +85,8 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
         } else {
             // If no date, but it's social media, we give it a pass because Tavily sucks at extracting dates from SPA.
             if (isSocialMedia) {
-               passesDateCheck = true; 
+               const recentContent = content.match(/\b(\d{1,2}\s(?:minutes?|hours?)\sago)\b/i);
+            passesDateCheck = recentContent !== null; 
             }
         }
 
